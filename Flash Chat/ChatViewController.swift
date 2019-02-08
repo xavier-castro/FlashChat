@@ -14,7 +14,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     
     // Declare instance variables here
-
+    var messageArray: [Message] = [Message]()
     
     // We've pre-linked the IBOutlets
     @IBOutlet var heightConstraint: NSLayoutConstraint!
@@ -47,6 +47,8 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         configureTableView()
         
+        retriveMessages()
+        
     }
 
     ///////////////////////////////////////////
@@ -60,9 +62,11 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "customMessageCell", for: indexPath) as! CustomMessageCell
         
-        let messageArray = ["First Message", "Second Message", "Third Message"]
+        cell.messageBody.text = messageArray[indexPath.row].messageBody
         
-        cell.messageBody.text = messageArray[indexPath.row]
+        cell.senderUsername.text = messageArray[indexPath.row].sender
+        
+        cell.avatarImageView.image = UIImage(named: "egg")
         
         return cell
         
@@ -72,7 +76,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     //TODO: Declare numberOfRowsInSection here:
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return 3
+        return messageArray.count
         
     }
     
@@ -185,7 +189,36 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     //TODO: Create the retrieveMessages method here:
     
-    
+    func retriveMessages() {
+        
+        let messageDB = Database.database().reference().child("Messages")
+        
+        // Whenever a new entry gets added to the database
+        messageDB.observe(.childAdded) { (snapshot) in
+            
+            let snapshotValue = snapshot.value as! Dictionary<String, String>
+            
+            let text = snapshotValue["MessageBody"]!
+            
+            let sender = snapshotValue["Sender"]!
+            
+            let message = Message()
+            
+            message.messageBody = text
+            
+            message.sender = sender
+            
+            self.messageArray.append(message)
+            
+            // Every time we add new data to our database we will need to reload the table view
+            
+            self.configureTableView()
+            
+            self.messageTableView.reloadData()
+            
+        }
+        
+    }
 
     
     
@@ -195,14 +228,20 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         //TODO: Log out the user and send them back to WelcomeViewController
         do {
             try Auth.auth().signOut()
+            
         } catch {
+            
             print("ERROR, there was an problem signing out")
+            
         }
         
         guard (navigationController?.popToRootViewController(animated: true)) != nil
             else {
+                
                 print("No View Controllers to pop off")
+                
                 return
+                
         }
         
     }
