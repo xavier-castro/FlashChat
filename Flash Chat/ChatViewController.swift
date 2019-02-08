@@ -49,6 +49,8 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         retriveMessages()
         
+        messageTableView.separatorStyle = .none
+        
     }
 
     ///////////////////////////////////////////
